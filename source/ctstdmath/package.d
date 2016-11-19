@@ -390,6 +390,34 @@ real csc(real x)
 /// ditto
 alias cosec = csc;
 
+/// arctangent.
+real atan(real x)
+{
+    if (x < 0)
+        return -(-x).atan;
+    if (x.isInfinity)
+        return PI_2;
+    if (x == 1)
+        return PI_2 / 2;
+    if (1 < x)
+        return PI_2 - (1 / x).atan;
+    if (1 < 3 * x * x) // without this, very slow when |x| ~ 1.
+        return PI_2 / 3 + ((x - 1 / real(3).sqrt) / (1 + x / real(3).sqrt)).atan;
+    real ret = 0, numeratorX = x, old = real.nan;
+    x *= x;
+    real i = 2;
+    while (ret != old)
+    {
+        old = ret;
+        ret += numeratorX * (i + 1 - (i - 1) * x) / (i * i - 1);
+        i += 4;
+        numeratorX *= x * x;
+    }
+    import std.experimental.logger;
+    i.trace;
+    return ret;
+}
+
 ///
 bool isInfinity(real x)
 {
