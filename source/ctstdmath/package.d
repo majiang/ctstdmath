@@ -1,6 +1,6 @@
 module ctstdmath;
 
-import std.math : LN2, LOG2E, abs, fabs, sqrt, hypot, poly;
+import std.math : LN2, LOG2E, PI, PI_2, abs, fabs, sqrt, hypot, poly;
 unittest
 {
     enum a = real(1).abs, b = real(1).fabs, c = real(1).sqrt, d = real(1).hypot(real(1)), e = real(1).poly([real(0)]);
@@ -329,6 +329,66 @@ unittest
     static assert(2.modHalf(1) == 0);
     static assert(2.5.modHalf(1) == 0.5);
 }
+
+/// cosine.
+real cos(real x)
+{
+    return (x.modHalf(PI) + PI_2).sin;
+}
+///
+unittest
+{
+    static assert(PI_2.cos == 0);
+}
+
+/// sine.
+real sin(real x)
+{
+    x = x.modHalf(PI);
+    if (x < 0)
+        return -(-x).sin;
+    if (PI < x * 2)
+        return (PI - x).sin;
+    real ret = 0, nextTerm = x, old = real.nan;
+    size_t i;
+    x = -(x * x);
+    while (ret != old)
+    {
+        old = ret;
+        ret += nextTerm;
+        i += 2;
+        nextTerm *= x / (i * (i + 1));
+    }
+    return ret;
+}
+///
+unittest
+{
+    static assert(0.sin == 0);
+}
+
+/// tangent.
+real tan(real x)
+{
+    return x.sin / x.cos;
+}
+/// cotangent.
+real cot(real x)
+{
+    return x.cos / x.sin;
+}
+/// secant.
+real sec(real x)
+{
+    return 1 / x.cos;
+}
+/// cosecant.
+real csc(real x)
+{
+    return 1 / x.sin;
+}
+/// ditto
+alias cosec = csc;
 
 ///
 bool isInfinity(real x)
