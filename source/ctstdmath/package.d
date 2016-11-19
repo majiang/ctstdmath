@@ -7,7 +7,7 @@ unittest
 }
 unittest
 {
-    enum a = real(1).cbrt;
+    enum a = real(1).cbrt, b = real(1).exp2, c = real(1).exp, d = real(1).lg, e = real(1).log, f = real(1).expm1;
 }
 
 ///
@@ -146,6 +146,23 @@ unittest
     static assert((-2).exp2exp2 * 16 == 1);
 }
 
+/// equivalent to exp(x) - 1, but more accurate when |x| is small.
+real expm1(real x)
+{
+    if (!(-1 < x && x < 1))
+        return x.exp - 1;
+    real ret = 0, nextTerm = 1, old = real.nan;
+    size_t i;
+    while (ret != old)
+    {
+        i += 1;
+        nextTerm *= x / i;
+        old = ret;
+        ret += nextTerm;
+    }
+    return ret;
+}
+
 /// Natural logarithm.
 real log(real x)
 {
@@ -201,7 +218,12 @@ in
 }
 body
 {
-    x -= 1;
+    return log1p(x - 1);
+}
+
+/// equivalent to log(x + 1), but more accurate when |x| is small.
+real log1p(real x)
+{
     real ret = 0, power = -1, old = real.nan;
     size_t i;
     while (ret != old)
