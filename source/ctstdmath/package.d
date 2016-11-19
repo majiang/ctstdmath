@@ -236,6 +236,66 @@ real log1p(real x)
     return ret;
 }
 
+/// floor function.
+real floor(real x)
+{
+    if (x.isNaN)
+        return x;
+    if (x <= -0x1p+63 || +0x1p+63 <= x)
+        return x;
+    if (x < 0)
+        return -(-x).ceil;
+    ulong left = 0, right = 1UL << 63;
+    // binary search [)
+    foreach (i; 0..63)
+    {
+        auto mid = (left & right) + ((left ^ right) >> 1);
+        if (x < mid)
+            right = mid;
+        else
+            left = mid;
+    }
+    return left;
+}
+///
+unittest
+{
+    static assert((-0.01).floor == -1);
+    static assert(real(0).floor == 0);
+    static assert(0.01.floor == 0);
+}
+
+/// ceiling function.
+real ceil(real x)
+{
+    if (x.isNaN)
+        return x;
+    if (x <= -0x1p+63 || +0x1p+63 <= x)
+        return x;
+    if (x <= 0)
+        return -(-x).floor;
+    ulong left = 0, right = 1UL << 63;
+    // binary search (]
+    foreach (i; 0..63)
+    {
+        auto mid = (left & right) + ((left ^ right) >> 1);
+        if (x <= mid)
+            right = mid;
+        else
+            left = mid;
+    }
+    return right;
+}
+/// ditto
+alias ceiling = ceil;
+///
+unittest
+{
+    static assert((-0.01).ceil == 0);
+    static assert(real(0).ceil == 0);
+    static assert(0.01.ceil == 1);
+}
+
 ///
 bool isInfinity(real x)
 {
