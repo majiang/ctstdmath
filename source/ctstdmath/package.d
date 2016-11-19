@@ -47,12 +47,9 @@ real exp(real x)
 /// power of 2.
 real exp2(real x)
 {
-    if (x.isNaN)
-        return x;
-    if (x < -(14).exp2small)
-        return 0;
-    if (14.exp2small < x)
-        return real.infinity;
+    if (x.isNaN) return x;
+    if (x < -(14).exp2small) return 0;
+    if (14.exp2small < x) return real.infinity;
     real ret = 1;
     if (0 < x)
     {
@@ -149,6 +146,73 @@ unittest
     static assert((-2).exp2exp2 * 16 == 1);
 }
 
+/// Natural logarithm.
+real log(real x)
+{
+    return x.lg * LN2;
+}
+alias ln = log; /// ditto
+
+/// Base-2 logarithm.
+real lg(real x)
+{
+    real ret = 0;
+    if (x < 0) return real.nan;
+    if (x == 0) return -real.infinity;
+    if (x.isNaN) return x;
+    if (x.isInfinity) return real.infinity; // x = +inf
+    enum left = real(2) / 3, right = real(4) / 3;
+    if (right < x)
+        foreach_reverse (byte i; 0..15)
+        {
+            if (x / i.exp2exp2 < left)
+                continue;
+            x /= i.exp2exp2;
+            ret += i.exp2small;
+        }
+    else if (x < left)
+        foreach_reverse (byte i; 0..15)
+        {
+            if (right < i.exp2exp2 * x)
+                continue;
+            x *= i.exp2exp2;
+            ret -= i.exp2small;
+        }
+    return x.logsmall / LN2 + ret;
+}
+/// ditto
+alias log2 = lg;
+unittest
+{
+    static assert((-1).lg.isNaN);
+    static assert(real.infinity.lg.isInfinity);
+    static assert(real.nan.lg.isNaN);
+    static assert(0.lg < 0 && 0.lg.isInfinity);
+    static assert(0.5.lg == -1);
+    static assert(1.lg == 0);
+    static assert(2.lg == 1);
+}
+
+private real logsmall(real x)
+in
+{
+    assert (0.5 < x);
+    assert (x < 1.5);
+}
+body
+{
+    x -= 1;
+    real ret = 0, power = -1, old = real.nan;
+    size_t i;
+    while (ret != old)
+    {
+        i += 1;
+        power *= -x;
+        old = ret;
+        ret += power / i;
+    }
+    return ret;
+}
 
 ///
 bool isInfinity(real x)
