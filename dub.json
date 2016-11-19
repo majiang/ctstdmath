@@ -1,0 +1,9 @@
+{
+	"name": "ctstdmath",
+	"authors": [
+		"Ryuichi OHORI"
+	],
+	"description": "A compile-time alternative for std.math",
+	"copyright": "This is free and unencumbered software released into the public domain.",
+	"license": "Unlicense"
+}
