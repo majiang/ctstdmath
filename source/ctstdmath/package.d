@@ -1,9 +1,9 @@
 module ctstdmath;
 
-import std.math : abs, fabs, sqrt;
+import std.math : LN2, LOG2E, abs, fabs, sqrt, hypot, poly;
 unittest
 {
-    enum a = real(1).abs, b = real(1).fabs, c = real(1).sqrt;
+    enum a = real(1).abs, b = real(1).fabs, c = real(1).sqrt, d = real(1).hypot(real(1)), e = real(1).poly([real(0)]);
 }
 unittest
 {
@@ -37,6 +37,118 @@ unittest
     static assert(real.nan.cbrt.isNaN);
     static assert(real.infinity.cbrt.isInfinity);
 }
+
+/// exponential function.
+real exp(real x)
+{
+    return (x * LOG2E).exp2;
+}
+
+/// power of 2.
+real exp2(real x)
+{
+    if (x.isNaN)
+        return x;
+    if (x < -(14).exp2small)
+        return 0;
+    if (14.exp2small < x)
+        return real.infinity;
+    real ret = 1;
+    if (0 < x)
+    {
+        foreach_reverse (byte i; 0..15)
+        {
+            if (x <= i.exp2small)
+                continue;
+            x -= i.exp2small;
+            ret *= i.exp2exp2;
+        }
+    }
+    else
+    {
+        foreach_reverse (byte i; 0..15)
+        {
+            if (-(i.exp2small) <= x)
+                continue;
+            x += i.exp2small;
+            ret /= i.exp2exp2;
+        }
+    }
+    if (ret == 0 || ret == real.infinity)
+        return ret;
+    if (+0.5 < x)
+    {
+        x -= 1;
+        ret *= 2;
+    }
+    if (x < -0.5)
+    {
+        x += 1;
+        ret /= 2;
+    }
+    return (x * LN2).expsmall * ret;
+}
+///
+unittest
+{
+    static assert(real.nan.exp2.isNaN);
+    static assert(real.infinity.exp2.isInfinity);
+    static assert((-real.infinity).exp2 == 0);
+    static assert(0.exp2 == 1);
+    static assert(2.exp2 == 4);
+    static assert(8.exp2 == 256);
+    static assert((-1).exp2 == 0.5);
+}
+
+private auto expsmall(in real x)
+in
+{
+    assert (-1 < x);
+    assert (x < +1);
+}
+body
+{
+    real ret = 0, nextTerm = 1, old = real.nan;
+    size_t i;
+    while (ret != old)
+    {
+        old = ret;
+        ret += nextTerm;
+        i += 1;
+        nextTerm *= x / i;
+    }
+    return ret;
+}
+
+private auto exp2small(byte n)
+{
+    real ret = 1;
+    if (0 <= n)
+        foreach (i; 0..n)
+            ret *= 2;
+    else
+        foreach (i; 0..-n)
+            ret *= real(0.5);
+    return ret;
+}
+private auto doubling(real x, in ubyte n)
+{
+    foreach (i; 0..n)
+        x *= x;
+    return x;
+}
+private auto exp2exp2(byte n)
+{
+    return (0 <= n) ? 2.doubling(n) : 0.5.doubling(-n);
+}
+unittest
+{
+    static assert(2.exp2small == 4);
+    static assert(2.exp2exp2 == 16);
+    static assert((-2).exp2small * 4 == 1);
+    static assert((-2).exp2exp2 * 16 == 1);
+}
+
 
 ///
 bool isInfinity(real x)
