@@ -1,9 +1,41 @@
 module ctstdmath;
 
+import std.math : abs, fabs, sqrt;
 unittest
 {
-    import std.math;
     enum a = real(1).abs, b = real(1).fabs, c = real(1).sqrt;
+}
+unittest
+{
+    enum a = real(1).cbrt;
+}
+
+///
+real cbrt(in real a)
+{
+    if (a < 0)
+        return -(-a).cbrt;
+    if (a.isNaN || a.isInfinity)
+        return a;
+    if (a == 0)
+        return 0;
+    // safe initial guess.
+    real x = a.sqrt, y = real.infinity;
+    while (x < y)
+    {
+        y = x;
+        x = (x * 2 + (a / (x * x))) / 3;
+    }
+    return x;
+}
+///
+unittest
+{
+    static assert(8.cbrt == 2);
+    static assert(0.cbrt == 0);
+    static assert((-8).cbrt == -2);
+    static assert(real.nan.cbrt.isNaN);
+    static assert(real.infinity.cbrt.isInfinity);
 }
 
 ///
