@@ -296,6 +296,40 @@ unittest
     static assert(0.01.ceil == 1);
 }
 
+/// reduce x into [-y .. y] modulo 2y.
+real modHalf(real x, real y)
+{
+    if (x.isNaN || y.isNaN || y == 0)
+        return real.nan;
+    if (y.isInfinity)
+        return x;
+    if (y < 0)
+        return x.modHalf(-y);
+    if (x < 0)
+        return -(-x).modHalf(y);
+    void dfs(real mod)
+    {
+        if (mod * 2 <= x)
+            return dfs(mod * 2);
+        if (mod <= x)
+            x -= mod;
+    }
+    dfs(y * 2);
+    if (y < x)
+        return x - 2 * y;
+    return x;
+}
+///
+unittest
+{
+    static assert(0.modHalf(1) == 0);
+    static assert(0.5.modHalf(1) == 0.5);
+    static assert(1.modHalf(1) == 1);
+    static assert(1.5.modHalf(1) == -0.5);
+    static assert(2.modHalf(1) == 0);
+    static assert(2.5.modHalf(1) == 0.5);
+}
+
 ///
 bool isInfinity(real x)
 {
